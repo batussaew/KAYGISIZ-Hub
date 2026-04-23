@@ -1,4 +1,4 @@
--- [[ KAYGISIZ ENGINE V7 | THE MASTERPIECE ]] --
+-- [[ KAYGISIZ ENGINE V7.1 | THE MASTERPIECE (SERVER HOP FIXED) ]] --
 -- GitHub: batussaew/KAYGISIZ-Hub
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -91,7 +91,7 @@ end
 -- ARAYÜZ (UI)
 -- ========================================== --
 local Window = Rayfield:CreateWindow({
-   Name = "KAYGISIZ ENGINE | V7 MASTERPIECE",
+   Name = "KAYGISIZ ENGINE | V7.1",
    LoadingTitle = "Bütün Özellikler Aktif",
    Theme = "DarkBlue", ConfigurationSaving = {Enabled = false}
 })
@@ -281,12 +281,22 @@ BossTab:CreateToggle({
 BossTab:CreateButton({
    Name = "Server Hop (Sunucu Değiştir)",
    Callback = function()
-        local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100")).data
-        for _, s in pairs(servers) do
-            if s.playing < s.maxPlayers and s.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, Player) break
+        pcall(function()
+            -- Roblox'un API engelini RoProxy ile aşıyoruz
+            local proxyUrl = "https://games.roproxy.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+            local request = game:HttpGet(proxyUrl)
+            local decoded = HttpService:JSONDecode(request)
+            
+            if decoded and decoded.data then
+                for _, server in pairs(decoded.data) do
+                    -- Sunucuda boş yer olduğundan emin ol ve aynı sunucuya atlama
+                    if server.playing < (server.maxPlayers - 1) and server.id ~= game.JobId then
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Player)
+                        break
+                    end
+                end
             end
-        end
+        end)
    end,
 })
 
@@ -307,6 +317,7 @@ ConfigTab:CreateButton({
         getgenv().Kaygisiz.AutoPlayer = false
         getgenv().Kaygisiz.AutoBoss = false
         getgenv().Kaygisiz.AutoChest = false
+        getgenv().Kaygisiz.AutoFruit = false
         stopMovement()
         if getgenv().Kaygisiz.Connections["Noclip"] then getgenv().Kaygisiz.Connections["Noclip"]:Disconnect() end
         Rayfield:Destroy()
