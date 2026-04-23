@@ -1,5 +1,9 @@
--- [[ KAYGISIZ ENGINE V8.2 | FLUENT EDITION (STABLE) ]] --
+-- [[ KAYGISIZ ENGINE V8.3 | FLUENT EDITION (LOAD FIX) ]] --
 -- Menü Kısayolu: K Tuşu
+
+-- Oyunun tamamen yüklenmesini bekle (PlaceID 0 hatasını önler)
+if not game:IsLoaded() then game.Loaded:Wait() end
+repeat task.wait(0.1) until game.PlaceId ~= 0 and game.JobId ~= ""
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
@@ -122,7 +126,7 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ========================================== --
--- GÜVENLİ SERVER HOP (JSON HATASI ÇÖZÜMÜ)
+-- GÜVENLİ SERVER HOP
 -- ========================================== --
 local function safeServerHop()
     Fluent:Notify({Title = "Server Hop", Content = "Sunucu aranıyor, lütfen bekle...", Duration = 3})
@@ -132,7 +136,6 @@ local function safeServerHop()
             local url = "https://games.roproxy.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
             local response = game:HttpGet(url)
             
-            -- Gelen veri gerçekten JSON formatında mı diye kontrol et (HTML hatalarını engeller)
             if response and string.find(response, '{"') then
                 local decoded = HttpService:JSONDecode(response)
                 if decoded and decoded.data then
@@ -159,12 +162,12 @@ end
 -- ========================================== --
 local Window = Fluent:CreateWindow({
     Title = "KAYGISIZ ENGINE",
-    SubTitle = "Fluent Edition V8.2",
+    SubTitle = "Fluent Edition V8.3",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.K -- MENÜ KISAYOL TUŞU BURADA K OLARAK AYARLANDI
+    MinimizeKey = Enum.KeyCode.K
 })
 
 local Tabs = {
@@ -175,7 +178,7 @@ local Tabs = {
 }
 
 Window:SelectTab(1)
-Fluent:Notify({Title = "Hoş Geldin!", Content = CurrentSea .. " Haritası Yüklendi.", Duration = 5})
+Fluent:Notify({Title = "Bağlantı Başarılı", Content = CurrentSea .. " Aktif Edildi.", Duration = 4})
 
 -- ========================================== --
 -- 1. MAIN FARM
@@ -213,7 +216,6 @@ Tabs.Main:AddToggle("FarmToggle", {Title = "Auto Farm (Yakın Mob)", Default = f
                             if getgenv().Kaygisiz.CurrentTween then getgenv().Kaygisiz.CurrentTween:Cancel() end
                             root.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, getgenv().Kaygisiz.FarmDistance, 0)
                             
-                            -- Silah Kuşan ve Vur
                             local char = getChar()
                             if not char:FindFirstChildWhichIsA("Tool") then
                                 for _, tool in pairs(Player.Backpack:GetChildren()) do
