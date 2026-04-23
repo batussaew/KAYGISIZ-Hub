@@ -1,4 +1,4 @@
--- [[ KAYGISIZ ENGINE V3 | BLOX FRUITS KUSURSUZ ÇEKİRDEK ]] --
+-- [[ KAYGISIZ ENGINE V3.1 | BLOX FRUITS KUSURSUZ ÇEKİRDEK ]] --
 -- GitHub: batussaew/KAYGISIZ-Hub
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -197,7 +197,7 @@ FarmTab:CreateToggle({
 })
 
 -- ========================================== --
--- CHEST SEKMESİ
+-- CHEST SEKMESİ (DÜZELTİLDİ)
 -- ========================================== --
 ChestTab:CreateToggle({
    Name = "Auto Chest Başlat",
@@ -207,16 +207,27 @@ ChestTab:CreateToggle({
         getgenv().Kaygisiz.AutoChest = Value
         spawn(function()
             while getgenv().Kaygisiz.AutoChest do
-                task.wait(1)
+                task.wait(0.5)
                 pcall(function()
-                    for _, v in pairs(workspace:GetDescendants()) do
-                        if v.Name:match("Chest") and v:IsA("Part") then
-                            if getgenv().Kaygisiz.AutoChest then
+                    local foundChest = false
+                    -- Sadece Workspace'in ana çocuklarını tarayarak performansı artırdık
+                    for _, v in pairs(workspace:GetChildren()) do
+                        if string.find(v.Name, "Chest") and v:IsA("Model") then
+                            local targetPart = v.PrimaryPart or v:FindFirstChildWhichIsA("Part") or v:FindFirstChildWhichIsA("MeshPart")
+                            if targetPart then
+                                foundChest = true
                                 stabilizeCharacter()
-                                kaygisizTween(v.CFrame)
-                                task.wait(0.5) -- Kutuyu almak için bekle
+                                local tween = kaygisizTween(targetPart.CFrame)
+                                tween.Completed:Wait() -- Sandığa ulaşana kadar bekle
+                                task.wait(0.5) -- Kutunun alındığından emin olmak için küçük bir bekleme
+                                if not getgenv().Kaygisiz.AutoChest then break end
                             end
                         end
+                    end
+                    
+                    -- Eğer haritada chest kalmadıysa biraz dinlen (Kasmayı önler)
+                    if not foundChest then
+                        task.wait(2)
                     end
                 end)
             end
