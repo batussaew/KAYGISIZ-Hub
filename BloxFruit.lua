@@ -1,5 +1,5 @@
--- [[ KAYGISIZ ENGINE V8 | FLUENT UI EDITION ]] --
--- GitHub: batussaew/KAYGISIZ-Hub
+-- [[ KAYGISIZ ENGINE V8.2 | FLUENT EDITION (STABLE) ]] --
+-- Menü Kısayolu: K Tuşu
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
@@ -11,84 +11,82 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local Player = Players.LocalPlayer
 
 -- ========================================== --
--- DENİZ (SEA) VE ADA VERİTABANI
+-- DİNAMİK ADA VE DENİZ VERİTABANI
 -- ========================================== --
 local PlaceID = game.PlaceId
-local CurrentSea = "Bilinmiyor"
 local IslandList = {}
+local CurrentSea = "Bilinmiyor"
 
 if PlaceID == 2753915549 then
-    CurrentSea = "Sea 1 (First Sea)"
+    CurrentSea = "Sea 1"
     IslandList = {
-        ["Başlangıç Adası"] = CFrame.new(979, 16, 1373),
-        ["Orman (Jungle)"] = CFrame.new(-1612, 36, 149),
-        ["Korsan Köyü"] = CFrame.new(-1184, 4, 3803),
-        ["Çöl (Desert)"] = CFrame.new(896, 6, 4389),
-        ["Kar Adası (Frozen Village)"] = CFrame.new(1184, 27, -1208),
-        ["Marine Kalesi"] = CFrame.new(-4859, 20, 4296),
+        ["Starter Island"] = CFrame.new(979, 16, 1373),
+        ["Jungle"] = CFrame.new(-1612, 36, 149),
+        ["Pirate Village"] = CFrame.new(-1184, 4, 3803),
+        ["Desert"] = CFrame.new(896, 6, 4389),
+        ["Frozen Village"] = CFrame.new(1184, 27, -1208),
+        ["Marine Fortress"] = CFrame.new(-4859, 20, 4296),
         ["Skypiea"] = CFrame.new(-4968, 717, -2622),
-        ["Magma Köyü"] = CFrame.new(-5291, 8, 8503)
+        ["Magma Village"] = CFrame.new(-5291, 8, 8503)
     }
 elseif PlaceID == 4442272183 then
-    CurrentSea = "Sea 2 (Second Sea)"
+    CurrentSea = "Sea 2"
     IslandList = {
-        ["Kafe (Cafe)"] = CFrame.new(-380, 73, 300),
-        ["Gül Krallığı"] = CFrame.new(717, 73, 908),
-        ["Yeşil Bölge (Green Zone)"] = CFrame.new(-2448, 73, -3221),
-        ["Zombi Adası"] = CFrame.new(-5735, 122, -7254),
-        ["Karanlık Arena"] = CFrame.new(3780, 22, -3565),
-        ["Karlı Dağ"] = CFrame.new(868, 400, -3050)
+        ["Cafe"] = CFrame.new(-380, 73, 300),
+        ["Kingdom of Rose"] = CFrame.new(717, 73, 908),
+        ["Green Zone"] = CFrame.new(-2448, 73, -3221),
+        ["Graveyard"] = CFrame.new(-5735, 122, -7254),
+        ["Dark Arena"] = CFrame.new(3780, 22, -3565),
+        ["Snow Mountain"] = CFrame.new(868, 400, -3050),
+        ["Hot and Cold"] = CFrame.new(-5373, 15, -5100),
+        ["Ice Castle"] = CFrame.new(6143, 332, -6776),
+        ["Forgotten Island"] = CFrame.new(-3035, 237, -10175)
     }
 elseif PlaceID == 7449423635 then
-    CurrentSea = "Sea 3 (Third Sea)"
+    CurrentSea = "Sea 3"
     IslandList = {
-        ["Malikane (Mansion)"] = CFrame.new(-12482, 332, -8056),
-        ["Liman (Port Town)"] = CFrame.new(-260, 49, 5322),
-        ["Hidra Adası"] = CFrame.new(5749, 610, -253),
-        ["Deniz Kalesi (Castle on the Sea)"] = CFrame.new(-5035, 314, -3179),
-        ["Büyük Ağaç"] = CFrame.new(2341, 237, -6990)
+        ["Mansion"] = CFrame.new(-12482, 332, -8056),
+        ["Port Town"] = CFrame.new(-260, 49, 5322),
+        ["Hydra Island"] = CFrame.new(5749, 610, -253),
+        ["Castle on the Sea"] = CFrame.new(-5035, 314, -3179),
+        ["Floating Turtle"] = CFrame.new(-13274, 531, -7579),
+        ["Great Tree"] = CFrame.new(2341, 237, -6990)
     }
-else
-    CurrentSea = "Blox Fruits Değil"
 end
 
 local IslandNames = {}
-for name, _ in pairs(IslandList) do table.insert(IslandNames, name) end
+for name, _ in pairs(IslandList) do 
+    table.insert(IslandNames, name) 
+end
+table.sort(IslandNames)
+
+if #IslandNames == 0 then
+    table.insert(IslandNames, "Ada Bulunamadı")
+end
 
 -- ========================================== --
--- GLOBAL DEĞİŞKENLER
+-- GLOBAL AYARLAR
 -- ========================================== --
 getgenv().Kaygisiz = {
-    AutoFarm = false, AutoChest = false, AutoBoss = false, AntiAfk = false,
-    FarmSpeed = 300, ChestSpeed = 350, FarmDistance = 7, Weapon = "Melee",
-    Skills = {Z = false, X = false, C = false, V = false}, CurrentTween = nil
+    AutoFarm = false, AutoChest = false, SelectedIsland = IslandNames[1],
+    FarmSpeed = 300, ChestSpeed = 350, FarmDistance = 7,
+    Weapon = "Melee", Skills = {Z = false, X = false, C = false, V = false},
+    CurrentTween = nil
 }
 
 -- ========================================== --
--- FİZİK VE GÜVENLİK (ANTI-DÜŞME)
+-- FİZİK VE GÜVENLİK
 -- ========================================== --
 local function getChar() return Player.Character or Player.CharacterAdded:Wait() end
 
 local function stabilize()
     local root = getChar():FindFirstChild("HumanoidRootPart")
     if root then
-        -- Anti-Yerçekimi (BodyVelocity) Ekleyerek Titremeyi %100 Önler
-        local bv = root:FindFirstChild("KaygisizAntiFall")
-        if not bv then
-            bv = Instance.new("BodyVelocity")
-            bv.Name = "KaygisizAntiFall"
-            bv.MaxForce = Vector3.new(100000, 100000, 100000)
-            bv.Parent = root
-        end
+        local bv = root:FindFirstChild("KaygisizAntiFall") or Instance.new("BodyVelocity", root)
+        bv.Name = "KaygisizAntiFall"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
         bv.Velocity = Vector3.new(0, 0, 0)
-        root.Velocity = Vector3.new(0,0,0)
-    end
-end
-
-local function removeStabilize()
-    local root = getChar():FindFirstChild("HumanoidRootPart")
-    if root and root:FindFirstChild("KaygisizAntiFall") then
-        root.KaygisizAntiFall:Destroy()
+        root.Velocity = Vector3.new(0, 0, 0)
     end
 end
 
@@ -97,10 +95,14 @@ local function stopMovement()
         getgenv().Kaygisiz.CurrentTween:Cancel() 
         getgenv().Kaygisiz.CurrentTween = nil
     end
-    removeStabilize()
+    local root = getChar():FindFirstChild("HumanoidRootPart")
+    if root and root:FindFirstChild("KaygisizAntiFall") then
+        root.KaygisizAntiFall:Destroy()
+    end
 end
 
 local function doTween(targetCFrame, speed)
+    if getgenv().Kaygisiz.CurrentTween then getgenv().Kaygisiz.CurrentTween:Cancel() end
     local root = getChar():WaitForChild("HumanoidRootPart")
     local dist = (root.Position - targetCFrame.Position).Magnitude
     getgenv().Kaygisiz.CurrentTween = TweenService:Create(root, TweenInfo.new(dist / speed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
@@ -120,91 +122,70 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ========================================== --
--- SİLAH VE SALDIRI
+-- GÜVENLİ SERVER HOP (JSON HATASI ÇÖZÜMÜ)
 -- ========================================== --
-local function equipWeapon()
-    pcall(function()
-        local char = getChar()
-        if not char:FindFirstChildWhichIsA("Tool") then
-            for _, tool in pairs(Player.Backpack:GetChildren()) do
-                if tool:IsA("Tool") and (tool.ToolTip == getgenv().Kaygisiz.Weapon or tool.Name == getgenv().Kaygisiz.Weapon) then
-                    char.Humanoid:EquipTool(tool) break
-                end
-            end
-        end
-    end)
-end
-
-local function attackTarget(targetPos)
-    pcall(function()
-        workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, targetPos)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        for skill, active in pairs(getgenv().Kaygisiz.Skills) do
-            if active then
-                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[skill], false, game)
-                task.wait(0.01)
-                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode[skill], false, game)
-            end
-        end
-    end)
-end
-
--- ========================================== --
--- SERVER HOP (REQUEST BYPASS)
--- ========================================== --
-local function serverHop()
-    local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-    if httprequest then
-        local req = httprequest({Url = "https://games.roproxy.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100", Method = "GET"})
-        if req and req.Body then
-            local body = HttpService:JSONDecode(req.Body)
-            if body and body.data then
-                for _, v in pairs(body.data) do
-                    if v.playing < v.maxPlayers - 1 and v.id ~= game.JobId then
-                        TeleportService:TeleportToPlaceInstance(PlaceID, v.id, Player)
-                        return
+local function safeServerHop()
+    Fluent:Notify({Title = "Server Hop", Content = "Sunucu aranıyor, lütfen bekle...", Duration = 3})
+    
+    task.spawn(function()
+        local success, err = pcall(function()
+            local url = "https://games.roproxy.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
+            local response = game:HttpGet(url)
+            
+            -- Gelen veri gerçekten JSON formatında mı diye kontrol et (HTML hatalarını engeller)
+            if response and string.find(response, '{"') then
+                local decoded = HttpService:JSONDecode(response)
+                if decoded and decoded.data then
+                    for _, server in ipairs(decoded.data) do
+                        if server.playing < (server.maxPlayers - 1) and server.id ~= game.JobId then
+                            TeleportService:TeleportToPlaceInstance(PlaceID, server.id, Player)
+                            return
+                        end
                     end
                 end
+            else
+                Fluent:Notify({Title = "Hata", Content = "Proxy engellendi, tekrar dene.", Duration = 3})
             end
+        end)
+        
+        if not success then
+            Fluent:Notify({Title = "Sistem Hatası", Content = "Sunucu listesi alınamadı.", Duration = 3})
         end
-    end
-    -- Fallback
-    TeleportService:Teleport(PlaceID, Player)
+    end)
 end
 
 -- ========================================== --
--- ARAYÜZ (FLUENT UI)
+-- ARAYÜZ KURULUMU (K TUŞU)
 -- ========================================== --
 local Window = Fluent:CreateWindow({
     Title = "KAYGISIZ ENGINE",
-    SubTitle = "V8 Fluent Edition",
+    SubTitle = "Fluent Edition V8.2",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
-    Theme = "Dark"
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.K -- MENÜ KISAYOL TUŞU BURADA K OLARAK AYARLANDI
 })
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main Farm", Icon = "swords" }),
     Island = Window:AddTab({ Title = "Island Farm", Icon = "map" }),
     World = Window:AddTab({ Title = "World & Chest", Icon = "box" }),
-    Settings = Window:AddTab({ Title = "Farm Settings", Icon = "settings" })
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 Window:SelectTab(1)
-Fluent:Notify({ Title = "Sistem Aktif", Content = "Deniz Algılandı: " .. CurrentSea, Duration = 5 })
+Fluent:Notify({Title = "Hoş Geldin!", Content = CurrentSea .. " Haritası Yüklendi.", Duration = 5})
 
 -- ========================================== --
--- 1. MAIN FARM SEKMESİ
+-- 1. MAIN FARM
 -- ========================================== --
 Tabs.Main:AddDropdown("WeaponDrop", {
-    Title = "Silah Seçimi", Values = {"Melee", "Sword", "Blox Fruit", "Gun"}, Default = 1,
-    Callback = function(Value) getgenv().Kaygisiz.Weapon = Value end
+    Title = "Silah Seçimi", Values = {"Melee", "Sword", "Blox Fruit"}, Default = 1,
+    Callback = function(v) getgenv().Kaygisiz.Weapon = v end
 })
 
-local ToggleFarm = Tabs.Main:AddToggle("FarmToggle", {Title = "Auto Farm (Yakın Mob)", Default = false})
-ToggleFarm:OnChanged(function(Value)
+Tabs.Main:AddToggle("FarmToggle", {Title = "Auto Farm (Yakın Mob)", Default = false}):OnChanged(function(Value)
     getgenv().Kaygisiz.AutoFarm = Value
     if not Value then stopMovement() return end
     
@@ -220,19 +201,31 @@ ToggleFarm:OnChanged(function(Value)
                 end
                 
                 if target then
+                    stabilize()
                     while getgenv().Kaygisiz.AutoFarm and target.Parent and target.Humanoid.Health > 0 do
                         local root = getChar():FindFirstChild("HumanoidRootPart")
                         local dist = (root.Position - target.HumanoidRootPart.Position).Magnitude
                         
-                        if dist > 20 then
+                        if dist > 15 then
                             doTween(target.HumanoidRootPart.CFrame * CFrame.new(0, getgenv().Kaygisiz.FarmDistance, 0), getgenv().Kaygisiz.FarmSpeed)
                             task.wait(0.2)
                         else
                             if getgenv().Kaygisiz.CurrentTween then getgenv().Kaygisiz.CurrentTween:Cancel() end
-                            stabilize() -- Yerçekimini sıfırla, titremeyi önle
                             root.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, getgenv().Kaygisiz.FarmDistance, 0)
-                            equipWeapon()
-                            attackTarget(target.HumanoidRootPart.Position)
+                            
+                            -- Silah Kuşan ve Vur
+                            local char = getChar()
+                            if not char:FindFirstChildWhichIsA("Tool") then
+                                for _, tool in pairs(Player.Backpack:GetChildren()) do
+                                    if tool:IsA("Tool") and (tool.ToolTip == getgenv().Kaygisiz.Weapon or tool.Name == getgenv().Kaygisiz.Weapon) then
+                                        char.Humanoid:EquipTool(tool) break
+                                    end
+                                end
+                            end
+                            
+                            workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, target.HumanoidRootPart.Position)
+                            VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,1)
+                            VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,1)
                             task.wait(0.1)
                         end
                     end
@@ -243,55 +236,44 @@ ToggleFarm:OnChanged(function(Value)
 end)
 
 -- ========================================== --
--- 2. ISLAND FARM & TRAVEL SEKMESİ
+-- 2. ISLAND FARM (DİNAMİK DENİZ)
 -- ========================================== --
-Tabs.Island:AddParagraph({Title = "Mevcut Konum", Content = "Şu anda bulunduğun deniz: " .. CurrentSea})
+Tabs.Island:AddParagraph({Title = "Mevcut Konum Bilgisi", Content = "Aktif Deniz: " .. CurrentSea})
 
-if #IslandNames > 0 then
-    local selectedIsland = IslandNames[1]
-    Tabs.Island:AddDropdown("IslandDrop", {
-        Title = "Adayı Seç", Values = IslandNames, Default = 1,
-        Callback = function(Value) selectedIsland = Value end
-    })
-    
-    Tabs.Island:AddButton({
-        Title = "Adaya Işınlan",
-        Callback = function()
-            if IslandList[selectedIsland] then
-                doTween(IslandList[selectedIsland], getgenv().Kaygisiz.FarmSpeed)
-                Fluent:Notify({Title="Işınlanıyor", Content=selectedIsland .. " hedefine gidiliyor.", Duration=3})
-            end
+Tabs.Island:AddDropdown("IslandDrop", {
+    Title = "Adayı Seç", Values = IslandNames, Default = 1,
+    Callback = function(v) getgenv().Kaygisiz.SelectedIsland = v end
+})
+
+Tabs.Island:AddButton({
+    Title = "Seçili Adaya Işınlan",
+    Callback = function()
+        if IslandList[getgenv().Kaygisiz.SelectedIsland] then
+            Fluent:Notify({Title = "Işınlanıyor", Content = getgenv().Kaygisiz.SelectedIsland .. " hedefine gidiliyor.", Duration = 3})
+            doTween(IslandList[getgenv().Kaygisiz.SelectedIsland], getgenv().Kaygisiz.FarmSpeed)
         end
-    })
-end
+    end
+})
 
 Tabs.Island:AddSection("Deniz Değiştirme (Sea Travel)")
-Tabs.Island:AddButton({Title = "Sea 1'e Git (Town)", Callback = function()
-    -- Oyun içi kaptana ışınlanma veya doğrudan teleport (Roblox bypass)
-    TeleportService:Teleport(2753915549, Player)
-end})
-Tabs.Island:AddButton({Title = "Sea 2'ye Git (Cafe)", Callback = function()
-    TeleportService:Teleport(4442272183, Player)
-end})
-Tabs.Island:AddButton({Title = "Sea 3'e Git (Mansion)", Callback = function()
-    TeleportService:Teleport(7449423635, Player)
-end})
+Tabs.Island:AddButton({Title = "Sea 1'e Git", Callback = function() TeleportService:Teleport(2753915549, Player) end})
+Tabs.Island:AddButton({Title = "Sea 2'ye Git", Callback = function() TeleportService:Teleport(4442272183, Player) end})
+Tabs.Island:AddButton({Title = "Sea 3'e Git", Callback = function() TeleportService:Teleport(7449423635, Player) end})
 
 -- ========================================== --
--- 3. WORLD & CHEST SEKMESİ
+-- 3. WORLD & CHEST
 -- ========================================== --
-local ToggleChest = Tabs.World:AddToggle("ChestToggle", {Title = "Auto Chest", Default = false})
-ToggleChest:OnChanged(function(Value)
-    getgenv().Kaygisiz.AutoChest = Value
-    if not Value then stopMovement() return end
+Tabs.World:AddToggle("ChestToggle", {Title = "Auto Chest (Tüm Harita)", Default = false}):OnChanged(function(v)
+    getgenv().Kaygisiz.AutoChest = v
+    if not v then stopMovement() return end
     
     task.spawn(function()
         while getgenv().Kaygisiz.AutoChest do
             task.wait(0.5)
             pcall(function()
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if getgenv().Kaygisiz.AutoChest and v.Name:find("Chest") and v:IsA("Part") then
-                        local twn = doTween(v.CFrame, getgenv().Kaygisiz.ChestSpeed)
+                for _, chest in pairs(workspace:GetDescendants()) do
+                    if getgenv().Kaygisiz.AutoChest and chest.Name:find("Chest") and chest:IsA("Part") then
+                        local twn = doTween(chest.CFrame, getgenv().Kaygisiz.ChestSpeed)
                         while twn.PlaybackState == Enum.PlaybackState.Playing and getgenv().Kaygisiz.AutoChest do task.wait(0.1) end
                         task.wait(0.3)
                     end
@@ -301,30 +283,15 @@ ToggleChest:OnChanged(function(Value)
     end)
 end)
 
-Tabs.World:AddButton({Title = "Server Hop (Sunucu Değiştir)", Callback = function()
-    Fluent:Notify({Title="Server Hop", Content="Yeni sunucu aranıyor...", Duration=3})
-    serverHop()
-end})
+Tabs.World:AddButton({Title = "Server Hop (Kusursuz)", Callback = safeServerHop})
 
 -- ========================================== --
--- 4. FARM SETTINGS SEKMESİ (HIZ VE SKİLLER)
+-- 4. SETTINGS
 -- ========================================== --
-Tabs.Settings:AddSlider("FSpeed", {
-    Title = "Auto Farm Hızı", Min = 150, Max = 500, Default = 300,
-    Callback = function(Value) getgenv().Kaygisiz.FarmSpeed = Value end
-})
+Tabs.Settings:AddSlider("FSpeed", {Title = "Farm Işınlanma Hızı", Min = 150, Max = 500, Default = 300, Callback = function(v) getgenv().Kaygisiz.FarmSpeed = v end})
+Tabs.Settings:AddSlider("CSpeed", {Title = "Chest Işınlanma Hızı", Min = 150, Max = 600, Default = 350, Callback = function(v) getgenv().Kaygisiz.ChestSpeed = v end})
 
-Tabs.Settings:AddSlider("CSpeed", {
-    Title = "Auto Chest Hızı", Min = 150, Max = 600, Default = 350,
-    Callback = function(Value) getgenv().Kaygisiz.ChestSpeed = Value end
-})
-
-Tabs.Settings:AddSection("Kullanılacak Skiller")
-Tabs.Settings:AddToggle("sz", {Title="Z Yeteneği", Default=false}):OnChanged(function(v) getgenv().Kaygisiz.Skills.Z = v end)
-Tabs.Settings:AddToggle("sx", {Title="X Yeteneği", Default=false}):OnChanged(function(v) getgenv().Kaygisiz.Skills.X = v end)
-Tabs.Settings:AddToggle("sc", {Title="C Yeteneği", Default=false}):OnChanged(function(v) getgenv().Kaygisiz.Skills.C = v end)
-Tabs.Settings:AddToggle("sv", {Title="V Yeteneği", Default=false}):OnChanged(function(v) getgenv().Kaygisiz.Skills.V = v end)
-
+Tabs.Settings:AddSection("Sistem Kontrolü")
 Tabs.Settings:AddButton({Title = "Hileyi Tamamen Kapat (Unload)", Callback = function()
     getgenv().Kaygisiz.AutoFarm = false
     getgenv().Kaygisiz.AutoChest = false
