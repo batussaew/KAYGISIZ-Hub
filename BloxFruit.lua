@@ -1,4 +1,4 @@
--- [[ KAYGISIZ ENGINE V3.1 | BLOX FRUITS KUSURSUZ ÇEKİRDEK ]] --
+-- [[ KAYGISIZ ENGINE V4 | PERFECT BLOX FRUITS SCRIPT ]] --
 -- GitHub: batussaew/KAYGISIZ-Hub
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -9,27 +9,26 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local Player = Players.LocalPlayer
 
 -- ========================================== --
--- GLOBAL KONTROLLER VE DEĞİŞKENLER
+-- GLOBAL DEĞİŞKENLER
 -- ========================================== --
 getgenv().Kaygisiz = {
     AutoFarm = false,
     AutoChest = false,
     AntiAfk = false,
     TweenSpeed = 300,
-    FarmDistance = 7,
+    FarmDistance = 10, -- Biraz daha yüksekten ve uzaktan vurması için arttırıldı
     Weapon = "Melee",
     Skills = {Z = false, X = false, C = false, V = false},
-    Connections = {} -- Unload için her şeyi burada tutacağız
+    Connections = {}
 }
 
 -- ========================================== --
--- GÜVENLİK, FİZİK VE BYPASS (EN ÖNEMLİ KISIM)
+-- YARDIMCI FONKSİYONLAR
 -- ========================================== --
 local function getChar()
     return Player.Character or Player.CharacterAdded:Wait()
 end
 
--- Anti-Fling & Havada Sabit Kalma (Karakterin titremesini önler)
 local function stabilizeCharacter()
     local char = getChar()
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -39,20 +38,19 @@ local function stabilizeCharacter()
     end
 end
 
-local function kaygisizTween(targetPos)
+-- Sadece uzak mesafeler için Tween
+local function kaygisizTween(targetCFrame)
     local char = getChar()
     local root = char:WaitForChild("HumanoidRootPart")
+    local dist = (root.Position - targetCFrame.Position).Magnitude
     
-    local dist = (root.Position - targetPos.Position).Magnitude
     local timeToTravel = dist / getgenv().Kaygisiz.TweenSpeed
     local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-    
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetPos})
+    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
     tween:Play()
-    return tween
+    return tween, dist
 end
 
--- NOCLIP (Duvarlardan ve yerin altından geçme)
 getgenv().Kaygisiz.Connections["Noclip"] = RunService.Stepped:Connect(function()
     if getgenv().Kaygisiz.AutoFarm or getgenv().Kaygisiz.AutoChest then
         local char = getChar()
@@ -66,9 +64,6 @@ getgenv().Kaygisiz.Connections["Noclip"] = RunService.Stepped:Connect(function()
     end
 end)
 
--- ========================================== --
--- SAVAŞ VE SKİLL MANTİĞI
--- ========================================== --
 local function equipWeapon()
     pcall(function()
         local char = getChar()
@@ -83,18 +78,17 @@ local function equipWeapon()
     end)
 end
 
--- Blox Fruits için Garanti Tıklama ve Skill Kullanımı
 local function executeAttack()
     pcall(function()
-        -- Hızlı Tıklama
+        -- Düz Vuruş
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
         
         -- Skiller
-        if getgenv().Kaygisiz.Skills.Z then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Z, false, game) task.wait(0.01) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Z, false, game) end
-        if getgenv().Kaygisiz.Skills.X then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.X, false, game) task.wait(0.01) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.X, false, game) end
-        if getgenv().Kaygisiz.Skills.C then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game) task.wait(0.01) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game) end
-        if getgenv().Kaygisiz.Skills.V then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.V, false, game) task.wait(0.01) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.V, false, game) end
+        if getgenv().Kaygisiz.Skills.Z then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Z, false, game) task.wait(0.05) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Z, false, game) end
+        if getgenv().Kaygisiz.Skills.X then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.X, false, game) task.wait(0.05) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.X, false, game) end
+        if getgenv().Kaygisiz.Skills.C then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game) task.wait(0.05) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game) end
+        if getgenv().Kaygisiz.Skills.V then VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.V, false, game) task.wait(0.05) VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.V, false, game) end
     end)
 end
 
@@ -119,12 +113,12 @@ local function getEnemy()
 end
 
 -- ========================================== --
--- ARAYÜZ (KAYGISIZ DARK PURPLE THEME)
+-- ARAYÜZ (KAYGISIZ DARK PURPLE)
 -- ========================================== --
 local Window = Rayfield:CreateWindow({
-   Name = "KAYGISIZ ENGINE | Blox Fruits",
+   Name = "KAYGISIZ ENGINE | Blox Fruits V4",
    LoadingTitle = "Kaygısız Yükleniyor...",
-   LoadingSubtitle = "Sistem Aktif",
+   LoadingSubtitle = "Kusursuz Çekirdek",
    Theme = {
        TextColor = Color3.fromRGB(255, 255, 255),
        Background = Color3.fromRGB(15, 12, 16),
@@ -163,14 +157,15 @@ FarmTab:CreateDropdown({
 })
 
 FarmTab:CreateSection("Skiller")
-FarmTab:CreateToggle({Name = "Z Skilli", CurrentValue = false, Flag = "sz", Callback = function(v) getgenv().Kaygisiz.Skills.Z = v end})
-FarmTab:CreateToggle({Name = "X Skilli", CurrentValue = false, Flag = "sx", Callback = function(v) getgenv().Kaygisiz.Skills.X = v end})
-FarmTab:CreateToggle({Name = "C Skilli", CurrentValue = false, Flag = "sc", Callback = function(v) getgenv().Kaygisiz.Skills.C = v end})
-FarmTab:CreateToggle({Name = "V Skilli", CurrentValue = false, Flag = "sv", Callback = function(v) getgenv().Kaygisiz.Skills.V = v end})
+FarmTab:CreateToggle({Name = "Z Skilli Kullan", CurrentValue = false, Flag = "sz", Callback = function(v) getgenv().Kaygisiz.Skills.Z = v end})
+FarmTab:CreateToggle({Name = "X Skilli Kullan", CurrentValue = false, Flag = "sx", Callback = function(v) getgenv().Kaygisiz.Skills.X = v end})
+FarmTab:CreateToggle({Name = "C Skilli Kullan", CurrentValue = false, Flag = "sc", Callback = function(v) getgenv().Kaygisiz.Skills.C = v end})
+FarmTab:CreateToggle({Name = "V Skilli Kullan", CurrentValue = false, Flag = "sv", Callback = function(v) getgenv().Kaygisiz.Skills.V = v end})
 
 FarmTab:CreateSection("Başlat")
+local farmAngle = 0
 FarmTab:CreateToggle({
-   Name = "Auto Farm (En Yakın Yaratık)",
+   Name = "Auto Farm Başlat",
    CurrentValue = false,
    Flag = "FarmToggle",
    Callback = function(Value)
@@ -179,12 +174,33 @@ FarmTab:CreateToggle({
             getgenv().Kaygisiz.Connections["FarmLoop"] = RunService.Heartbeat:Connect(function()
                 if getgenv().Kaygisiz.AutoFarm then
                     local target = getEnemy()
-                    if target and target:FindFirstChild("HumanoidRootPart") then
+                    local char = getChar()
+                    if target and target:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("HumanoidRootPart") then
                         stabilizeCharacter()
                         equipWeapon()
-                        -- Yaratığın üstüne ışınlan ve vur
-                        kaygisizTween(target.HumanoidRootPart.CFrame * CFrame.new(0, getgenv().Kaygisiz.FarmDistance, 0))
-                        executeAttack()
+                        
+                        local root = char.HumanoidRootPart
+                        local targetRoot = target.HumanoidRootPart
+                        local dist = (root.Position - targetRoot.Position).Magnitude
+                        
+                        -- Aimbot: Kamerayı ve karakteri hedefe kilitle
+                        workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, targetRoot.Position)
+                        
+                        if dist > 30 then
+                            -- Uzaktaysa önce Tween ile yanına git
+                            kaygisizTween(targetRoot.CFrame * CFrame.new(0, getgenv().Kaygisiz.FarmDistance, 0))
+                        else
+                            -- Yakındaysa etrafında dairesel hareket yap (Strafing / Kiting)
+                            farmAngle = farmAngle + 0.1
+                            local offsetX = math.sin(farmAngle) * 8
+                            local offsetZ = math.cos(farmAngle) * 8
+                            
+                            local dodgePosition = targetRoot.Position + Vector3.new(offsetX, getgenv().Kaygisiz.FarmDistance, offsetZ)
+                            -- Yüzünü yaratığa dönerek hareket et
+                            root.CFrame = CFrame.lookAt(dodgePosition, targetRoot.Position)
+                            
+                            executeAttack()
+                        end
                     end
                 end
             end)
@@ -197,37 +213,42 @@ FarmTab:CreateToggle({
 })
 
 -- ========================================== --
--- CHEST SEKMESİ (DÜZELTİLDİ)
+-- CHEST SEKMESİ
 -- ========================================== --
 ChestTab:CreateToggle({
-   Name = "Auto Chest Başlat",
+   Name = "Auto Chest (Tüm Harita)",
    CurrentValue = false,
    Flag = "ChestToggle",
    Callback = function(Value)
         getgenv().Kaygisiz.AutoChest = Value
         spawn(function()
             while getgenv().Kaygisiz.AutoChest do
-                task.wait(0.5)
+                task.wait(1)
                 pcall(function()
                     local foundChest = false
-                    -- Sadece Workspace'in ana çocuklarını tarayarak performansı artırdık
-                    for _, v in pairs(workspace:GetChildren()) do
-                        if string.find(v.Name, "Chest") and v:IsA("Model") then
-                            local targetPart = v.PrimaryPart or v:FindFirstChildWhichIsA("Part") or v:FindFirstChildWhichIsA("MeshPart")
+                    -- Tüm haritayı derinlemesine tara
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if getgenv().Kaygisiz.AutoChest and (v.Name:find("Chest") or v.Name:find("chest")) then
+                            local targetPart = nil
+                            
+                            if v:IsA("Part") or v:IsA("MeshPart") then
+                                targetPart = v
+                            elseif v:IsA("Model") then
+                                targetPart = v.PrimaryPart or v:FindFirstChildWhichIsA("Part") or v:FindFirstChildWhichIsA("MeshPart")
+                            end
+                            
                             if targetPart then
                                 foundChest = true
                                 stabilizeCharacter()
                                 local tween = kaygisizTween(targetPart.CFrame)
-                                tween.Completed:Wait() -- Sandığa ulaşana kadar bekle
-                                task.wait(0.5) -- Kutunun alındığından emin olmak için küçük bir bekleme
-                                if not getgenv().Kaygisiz.AutoChest then break end
+                                if tween then tween.Completed:Wait() end
+                                task.wait(0.3) -- Alması için zaman tanı
                             end
                         end
                     end
                     
-                    -- Eğer haritada chest kalmadıysa biraz dinlen (Kasmayı önler)
                     if not foundChest then
-                        task.wait(2)
+                        task.wait(3)
                     end
                 end)
             end
@@ -236,10 +257,10 @@ ChestTab:CreateToggle({
 })
 
 -- ========================================== --
--- AYARLAR VE UNLOAD (GÜVENLİ KAPANIŞ)
+-- AYARLAR VE UNLOAD
 -- ========================================== --
 ConfigTab:CreateSlider({
-   Name = "Işınlanma Hızı (Bypass İçin)",
+   Name = "Işınlanma Hızı",
    Range = {150, 450},
    Increment = 10,
    Suffix = "Hız",
@@ -249,7 +270,7 @@ ConfigTab:CreateSlider({
 })
 
 ConfigTab:CreateToggle({
-   Name = "Anti-AFK (5 Saniyede Bir Zıpla)",
+   Name = "Anti-AFK (Zıplama Koruması)",
    CurrentValue = false,
    Flag = "AfkToggle",
    Callback = function(Value)
@@ -271,7 +292,6 @@ ConfigTab:CreateToggle({
 ConfigTab:CreateButton({
    Name = "Hileyi Temizle (Unload)",
    Callback = function()
-        -- Her şeyi durdur ve sil
         getgenv().Kaygisiz.AutoFarm = false
         getgenv().Kaygisiz.AutoChest = false
         getgenv().Kaygisiz.AntiAfk = false
