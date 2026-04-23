@@ -1,30 +1,22 @@
--- [[ KAYGISIZ ENGINE V9 | THE ABSOLUTE FIX ]] --
+-- [[ KAYGISIZ ENGINE V10 | ULTIMATE OVERRIDE ]] --
 -- Menü Kısayolu: K Tuşu
 
--- 1. KESİN YÜKLEME KONTROLÜ (Karakterin oyuna tamamen girmesini bekler)
-repeat task.wait() until game:IsLoaded()
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-repeat task.wait(0.5) until Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-repeat task.wait(0.5) until game.PlaceId ~= 0
+if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local Player = Players.LocalPlayer
 
 -- ========================================== --
--- DENİZ VE ADA VERİTABANI (DİNAMİK)
+-- BÜTÜN ADALARIN KESİN KOORDİNATLARI (MANUEL SİSTEM)
 -- ========================================== --
-local PlaceID = game.PlaceId
-local IslandList = {}
-local CurrentSea = ""
-
-if PlaceID == 2753915549 then
-    CurrentSea = "Sea 1 (İlk Deniz)"
-    IslandList = {
+local IslandDB = {
+    ["Sea 1"] = {
         ["Başlangıç Adası (Starter)"] = CFrame.new(979, 16, 1373),
         ["Orman (Jungle)"] = CFrame.new(-1612, 36, 149),
         ["Korsan Köyü (Pirate Village)"] = CFrame.new(-1184, 4, 3803),
@@ -36,10 +28,8 @@ if PlaceID == 2753915549 then
         ["Hapishane (Prison)"] = CFrame.new(4875, 5, 735),
         ["Magma Köyü"] = CFrame.new(-5291, 8, 8503),
         ["Çeşme Şehri (Fountain)"] = CFrame.new(5127, 38, 4105)
-    }
-elseif PlaceID == 4442272183 then
-    CurrentSea = "Sea 2 (İkinci Deniz)"
-    IslandList = {
+    },
+    ["Sea 2"] = {
         ["Kafe (Cafe / Güvenli Bölge)"] = CFrame.new(-380, 73, 300),
         ["Gül Krallığı (Rose)"] = CFrame.new(717, 73, 908),
         ["Yeşil Bölge (Green Zone)"] = CFrame.new(-2448, 73, -3221),
@@ -50,10 +40,8 @@ elseif PlaceID == 4442272183 then
         ["Buz Kalesi (Ice Castle)"] = CFrame.new(6143, 332, -6776),
         ["Unutulmuş Ada (Forgotten)"] = CFrame.new(-3035, 237, -10175),
         ["Karanlık Arena (Dark Arena)"] = CFrame.new(3780, 22, -3565)
-    }
-elseif PlaceID == 7449423635 then
-    CurrentSea = "Sea 3 (Üçüncü Deniz)"
-    IslandList = {
+    },
+    ["Sea 3"] = {
         ["Malikane (Mansion)"] = CFrame.new(-12482, 332, -8056),
         ["Liman Şehri (Port Town)"] = CFrame.new(-260, 49, 5322),
         ["Hidra Adası (Hydra)"] = CFrame.new(5749, 610, -253),
@@ -62,32 +50,30 @@ elseif PlaceID == 7449423635 then
         ["Perili Kale (Haunted Castle)"] = CFrame.new(-9515, 142, 5530),
         ["Fıstık Adası (Peanut)"] = CFrame.new(-2070, 38, -10216)
     }
-else
-    CurrentSea = "HATA! Yanlış ID: " .. tostring(PlaceID)
-    IslandList = {
-        ["Bilinmeyen Ada"] = CFrame.new(0, 0, 0)
-    }
-end
+}
 
-local IslandNames = {}
-for name, _ in pairs(IslandList) do 
-    table.insert(IslandNames, name) 
+-- İsimleri Çekme Fonksiyonu
+local function getIslandNames(seaName)
+    local list = {}
+    for name, _ in pairs(IslandDB[seaName]) do table.insert(list, name) end
+    table.sort(list)
+    return list
 end
-table.sort(IslandNames)
 
 -- ========================================== --
--- GLOBAL AYARLAR
+-- GLOBAL DEĞİŞKENLER VE MOTOR
 -- ========================================== --
 getgenv().Kaygisiz = {
-    AutoFarm = false, AutoChest = false, SelectedIsland = IslandNames[1],
+    AutoFarm = false, AutoChest = false, 
+    CurrentSeaMode = "Sea 1", -- Varsayılan
+    SelectedIsland = "", 
     FarmSpeed = 300, ChestSpeed = 350, FarmDistance = 7,
     Weapon = "Melee", Skills = {Z = false, X = false, C = false, V = false},
     CurrentTween = nil
 }
 
--- ========================================== --
--- FİZİK VE GÜVENLİK
--- ========================================== --
+getgenv().Kaygisiz.SelectedIsland = getIslandNames("Sea 1")[1]
+
 local function getChar() return Player.Character or Player.CharacterAdded:Wait() end
 
 local function stabilize()
@@ -118,6 +104,7 @@ local function doTween(targetCFrame, speed)
     local dist = (root.Position - targetCFrame.Position).Magnitude
     
     stabilize()
+    
     local twnInfo = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear)
     getgenv().Kaygisiz.CurrentTween = TweenService:Create(root, twnInfo, {CFrame = targetCFrame})
     getgenv().Kaygisiz.CurrentTween:Play()
@@ -140,7 +127,7 @@ end)
 -- ========================================== --
 local Window = Fluent:CreateWindow({
     Title = "KAYGISIZ ENGINE",
-    SubTitle = "V9 - The Absolute Fix",
+    SubTitle = "V10 - Manuel Override Sistemi",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
@@ -155,42 +142,66 @@ local Tabs = {
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
-Window:SelectTab(2) -- Script açıldığında direkt Island kısmına atsın
-Fluent:Notify({Title = "Sistem Hazır", Content = CurrentSea .. " Algılandı.", Duration = 5})
+Window:SelectTab(2)
+Fluent:Notify({Title = "V10 Yüklendi", Content = "ID bypass edildi, denizi manuel seçin.", Duration = 5})
 
 -- ========================================== --
--- 2. ISLAND FARM (KUSURSUZ)
+-- 2. ISLAND FARM (ID BYPASS - MANUAL OVERRIDE)
 -- ========================================== --
-Tabs.Island:AddParagraph({Title = "Mevcut Konum Bilgisi", Content = "Aktif Deniz: " .. CurrentSea})
+Tabs.Island:AddParagraph({Title = "Bilgi", Content = "Oyun ID okuması devre dışı bırakıldı. Hangi denizdeyseniz aşağıdan kendiniz seçin."})
 
-Tabs.Island:AddDropdown("IslandDrop", {
-    Title = "Adayı Seç", 
-    Values = IslandNames, 
+-- DENİZ SEÇİMİ (BURASI ADALARI GÜNCELLEYECEK)
+local IslandDropdown -- Önceden tanımlıyoruz ki içi güncellenebilsin
+
+Tabs.Island:AddDropdown("SeaOverride", {
+    Title = "1. Bulunduğun Denizi Seç", 
+    Values = {"Sea 1", "Sea 2", "Sea 3"}, 
     Default = 1,
-    Callback = function(v) getgenv().Kaygisiz.SelectedIsland = v end
-})
-
-Tabs.Island:AddButton({
-    Title = "Seçili Adaya Işınlan (Uçarak)",
-    Callback = function()
-        local seciliAda = getgenv().Kaygisiz.SelectedIsland
-        local hedefCFrame = IslandList[seciliAda]
+    Callback = function(seaName) 
+        getgenv().Kaygisiz.CurrentSeaMode = seaName
+        local newIslands = getIslandNames(seaName)
+        getgenv().Kaygisiz.SelectedIsland = newIslands[1]
         
-        if hedefCFrame and hedefCFrame.Position.Magnitude > 1 then
-            Fluent:Notify({Title = "Işınlanıyor", Content = seciliAda .. " konumuna gidiliyor.", Duration = 3})
-            doTween(hedefCFrame, getgenv().Kaygisiz.FarmSpeed)
-        else
-            Fluent:Notify({Title = "Hata", Content = "Geçersiz Koordinat!", Duration = 3})
+        -- Deniz değişince alt kısımdaki ada listesini güncelle
+        if IslandDropdown then
+            IslandDropdown:SetValues(newIslands)
+            IslandDropdown:SetValue(newIslands[1])
         end
     end
 })
 
-Tabs.Island:AddButton({Title = "İptal Et / Uçuşu Durdur", Callback = stopMovement})
+-- ADA SEÇİMİ (DİNAMİK)
+IslandDropdown = Tabs.Island:AddDropdown("IslandDrop", {
+    Title = "2. Gitmek İstediğin Adayı Seç", 
+    Values = getIslandNames("Sea 1"), 
+    Default = 1,
+    Callback = function(v) 
+        getgenv().Kaygisiz.SelectedIsland = v 
+    end
+})
 
-Tabs.Island:AddSection("Denizler Arası Geçiş")
-Tabs.Island:AddButton({Title = "Sea 1'e Git", Callback = function() TeleportService:Teleport(2753915549, Player) end})
-Tabs.Island:AddButton({Title = "Sea 2'ye Git", Callback = function() TeleportService:Teleport(4442272183, Player) end})
-Tabs.Island:AddButton({Title = "Sea 3'e Git", Callback = function() TeleportService:Teleport(7449423635, Player) end})
+Tabs.Island:AddButton({
+    Title = "Seçili Adaya Uç",
+    Callback = function()
+        local seciliDeniz = getgenv().Kaygisiz.CurrentSeaMode
+        local seciliAda = getgenv().Kaygisiz.SelectedIsland
+        local hedefCFrame = IslandDB[seciliDeniz][seciliAda]
+        
+        if hedefCFrame then
+            Fluent:Notify({Title = "Işınlanıyor", Content = seciliAda .. " konumuna gidiliyor.", Duration = 3})
+            doTween(hedefCFrame, getgenv().Kaygisiz.FarmSpeed)
+        else
+            Fluent:Notify({Title = "Hata", Content = "Ada bulunamadı!", Duration = 3})
+        end
+    end
+})
+
+Tabs.Island:AddButton({Title = "Uçuşu / Farmı Durdur", Callback = stopMovement})
+
+Tabs.Island:AddSection("Farklı Denize Geçiş (Loadlama)")
+Tabs.Island:AddButton({Title = "Sea 1 Sunucusuna Geç", Callback = function() TeleportService:Teleport(2753915549, Player) end})
+Tabs.Island:AddButton({Title = "Sea 2 Sunucusuna Geç", Callback = function() TeleportService:Teleport(4442272183, Player) end})
+Tabs.Island:AddButton({Title = "Sea 3 Sunucusuna Geç", Callback = function() TeleportService:Teleport(7449423635, Player) end})
 
 -- ========================================== --
 -- 1. MAIN FARM
@@ -250,7 +261,7 @@ Tabs.Main:AddToggle("FarmToggle", {Title = "Auto Farm (Yakın Mob)", Default = f
 end)
 
 -- ========================================== --
--- 3. WORLD & CHEST & SERVER HOP
+-- 3. WORLD & CHEST
 -- ========================================== --
 Tabs.World:AddToggle("ChestToggle", {Title = "Auto Chest (Tüm Harita)", Default = false}):OnChanged(function(v)
     getgenv().Kaygisiz.AutoChest = v
@@ -276,12 +287,12 @@ Tabs.World:AddButton({Title = "Server Hop (Güvenli Bypass)", Callback = functio
     Fluent:Notify({Title = "Server Hop", Content = "Sunucu aranıyor...", Duration = 3})
     task.spawn(function()
         pcall(function()
-            local response = game:HttpGet("https://games.roproxy.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100")
+            local response = game:HttpGet("https://games.roproxy.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100")
             if response and string.find(response, '{"') then
                 local decoded = HttpService:JSONDecode(response)
                 for _, server in ipairs(decoded.data) do
                     if server.playing < (server.maxPlayers - 1) and server.id ~= game.JobId then
-                        TeleportService:TeleportToPlaceInstance(PlaceID, server.id, Player)
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Player)
                         return
                     end
                 end
@@ -293,12 +304,4 @@ end})
 -- ========================================== --
 -- 4. SETTINGS
 -- ========================================== --
-Tabs.Settings:AddSlider("FSpeed", {Title = "Uçuş Hızı (Farm & Adalar)", Min = 150, Max = 500, Default = 300, Callback = function(v) getgenv().Kaygisiz.FarmSpeed = v end})
-Tabs.Settings:AddSlider("CSpeed", {Title = "Kutu Toplama Hızı (Chest)", Min = 150, Max = 600, Default = 350, Callback = function(v) getgenv().Kaygisiz.ChestSpeed = v end})
-
-Tabs.Settings:AddButton({Title = "Hileyi Tamamen Kapat (Unload)", Callback = function()
-    getgenv().Kaygisiz.AutoFarm = false
-    getgenv().Kaygisiz.AutoChest = false
-    stopMovement()
-    Window:Destroy()
-end})
+Tabs.Settings:AddSlider("FSpeed", {Title = "Uçuş Hızı (Farm & Adalar)", Min = 150, Max = 500, Default = 300, Callback = function(v) getgenv().Kaygisiz.FarmSpeed = v end
